@@ -50,14 +50,6 @@ namespace Overun.Waves
             Instance = this;
         }
         
-        private void OnDestroy()
-        {
-            if (Instance == this)
-            {
-                Instance = null;
-            }
-        }
-        
         private void Start()
         {
             if (_waveConfig == null)
@@ -65,9 +57,28 @@ namespace Overun.Waves
                 Debug.LogError("[WaveManager] No WaveConfig assigned!");
                 return;
             }
+            
+            // Subscribe to Shop events if ShopManager exists
+            if (Overun.Shop.ShopManager.Instance != null)
+            {
+                Overun.Shop.ShopManager.Instance.OnShopClosed += OnShopClosed;
+            }
+            
             // Auto-start first wave or wait for external trigger
-            // Uncomment below to auto-start:
             StartNextWave();
+        }
+        
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+            
+            if (Overun.Shop.ShopManager.Instance != null)
+            {
+                Overun.Shop.ShopManager.Instance.OnShopClosed -= OnShopClosed;
+            }
         }
         
         /// <summary>
@@ -152,6 +163,7 @@ namespace Overun.Waves
         private void OnShopClosed()
         {
             // Shop closed, move to next wave
+            Debug.Log("[WaveManager] Shop closed. Starting next wave sequence.");
             StartCoroutine(StartingNextWaveSequence());
         }
         

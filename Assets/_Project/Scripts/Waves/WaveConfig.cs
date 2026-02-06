@@ -116,6 +116,16 @@ namespace Overun.Waves
             if (!CanSpawnElites(waveNumber)) return false;
             return UnityEngine.Random.value < _eliteChance;
         }
+
+        public void SetMaxWaves(int maxWaves)
+        {
+            _maxWaves = maxWaves;
+        }
+        
+        public void SetTimeBetweenWaves(float timeBetweenWaves)
+        {
+            _timeBetweenWaves = timeBetweenWaves;
+        }
     }
 }
 

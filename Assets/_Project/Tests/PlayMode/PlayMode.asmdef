@@ -5,7 +5,14 @@
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
         "Overun.Waves",
-        "Overun.Core"
+        "Overun.Core",
+        "Overun.Shop",
+        "Overun.Enemies",
+        "Overun.Loot",
+        "Overun.Player",
+        "Overun.UI",
+        "Overun.Currency",
+        "Overun.Combat"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

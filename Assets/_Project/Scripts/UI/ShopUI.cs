@@ -26,6 +26,7 @@ namespace Overun.Shop
                 ShopManager.Instance.OnItemsRefreshed += RefreshDisplay;
                 
                 // Hide initially
+                Debug.Log("ShopUI: Hiding panel");
                 _shopPanel.SetActive(false);
             }
             

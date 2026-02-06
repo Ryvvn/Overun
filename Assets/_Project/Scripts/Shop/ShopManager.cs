@@ -45,15 +45,20 @@ namespace Overun.Shop
         {
             if (_isShopOpen) return;
             
+            // Wait for the clean up the wave to finish, wait for few seconds
+            StartCoroutine(WaitToOpenShop());
+        }
+        
+        private IEnumerator WaitToOpenShop()
+        {
+            yield return new WaitForSeconds(2f);
             _isShopOpen = true;
             Time.timeScale = 0f; // Pause game
-            
             RefreshItems(true); // Free refresh on open
-            
             OnShopOpened?.Invoke();
             Debug.Log("[ShopManager] Shop Opened");
         }
-        
+
         public void CloseShop()
         {
             if (!_isShopOpen) return;
