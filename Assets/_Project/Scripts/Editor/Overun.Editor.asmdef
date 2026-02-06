@@ -1,0 +1,23 @@
+{
+    "name": "Overun.Editor",
+    "rootNamespace": "Overun.Editor",
+    "references": [
+        "Unity.InputSystem",
+        "Overun.Core",
+        "Overun.Player",
+        "Overun.Weapons",
+        "Overun.UI",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

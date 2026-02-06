@@ -1,0 +1,21 @@
+{
+    "name": "Overun.Weapons",
+    "rootNamespace": "Overun.Weapons",
+    "references": [
+        "Unity.InputSystem",
+        "Overun.Core",
+        "Overun.Enemies",
+        "Overun.Environment",
+        "Overun.Input",
+        "Overun.Combat"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

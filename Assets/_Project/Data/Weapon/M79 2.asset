@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41addc4fc20d6d94ab7e61a220f30c57, type: 3}
+  m_Name: M79 2
+  m_EditorClassIdentifier: 
+  _weaponName: Pistol
+  _weaponType: 4
+  _rarity: 0
+  _element: 3
+  _effectDuration: 3
+  _effectStrength: 1
+  _isHitScan: 0
+  _projectilePrefab: {fileID: 1663185906634612793, guid: 8c7c2c6c39a53dc4b96cc73325b5e1b3,
+    type: 3}
+  _projectilePoolTag: Projectile
+  _projectileSpeed: 40
+  _baseDamage: 100
+  _fireRate: 5
+  _projectilesPerShot: 1
+  _spreadAngle: 5
+  _spreadIncreasePerShot: 0.1
+  _autoFireRange: 15
+  _autoFireRateMultiplier: 0.7
+  _stackDamageBonus: 0.25
+  _stackFireRateBonus: 0.1
+  _maxStacks: 1
+  _icon: {fileID: 21300000, guid: 9ef49c76e4492784aa42f28a80778d0f, type: 3}
+  _rarityColor: {r: 1, g: 1, b: 1, a: 1}
