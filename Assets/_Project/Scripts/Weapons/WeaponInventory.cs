@@ -4,6 +4,17 @@ using System.Collections.Generic;
 namespace Overun.Weapons
 {
     /// <summary>
+    /// Result of attempting to add a weapon to inventory.
+    /// </summary>
+    public enum AddWeaponResult
+    {
+        Added,          // New weapon added to empty slot
+        Upgraded,       // Duplicate stacked on existing weapon (tier up)
+        InventoryFull,  // No slots available, not a duplicate
+        AlreadyMaxTier  // Duplicate found but already at max stack
+    }
+    
+    /// <summary>
     /// Player's weapon inventory. Manages weapon slots, stacking, and switching.
     /// </summary>
     public class WeaponInventory : MonoBehaviour
@@ -35,24 +46,27 @@ namespace Overun.Weapons
             : null;
         
         /// <summary>
-        /// Try to add a weapon. Returns true if added or stacked.
+        /// Try to add a weapon. Returns detailed result for UI feedback.
         /// </summary>
-        public bool TryAddWeapon(WeaponData data)
+        public AddWeaponResult TryAddWeapon(WeaponData data)
         {
-            if (data == null) return false;
+            if (data == null) return AddWeaponResult.InventoryFull;
             
-            // First check if we can stack with existing weapon
-            foreach (var weapon in _weapons)
+            // First check if we have this exact weapon (duplicate -> upgrade)
+            WeaponInstance existing = GetWeaponByData(data);
+            if (existing != null)
             {
-                if (weapon.Data == data || weapon.Data.Type == data.Type)
+                if (existing.TryStack())
                 {
-                    if (weapon.TryStack())
-                    {
-                        Debug.Log($"[WeaponInventory] Stacked {data.WeaponName}! Now at {weapon.StackCount}");
-                        OnWeaponStacked?.Invoke(weapon);
-                        OnInventoryChanged?.Invoke();
-                        return true;
-                    }
+                    Debug.Log($"[WeaponInventory] UPGRADED {data.WeaponName}! Now Tier {existing.StackCount}");
+                    OnWeaponStacked?.Invoke(existing);
+                    OnInventoryChanged?.Invoke();
+                    return AddWeaponResult.Upgraded;
+                }
+                else
+                {
+                    Debug.Log($"[WeaponInventory] {data.WeaponName} already at max tier!");
+                    return AddWeaponResult.AlreadyMaxTier;
                 }
             }
             
@@ -72,11 +86,26 @@ namespace Overun.Weapons
                     SelectWeapon(0);
                 }
                 
-                return true;
+                return AddWeaponResult.Added;
             }
             
             Debug.Log("[WeaponInventory] Inventory full!");
-            return false;
+            return AddWeaponResult.InventoryFull;
+        }
+        
+        /// <summary>
+        /// Get weapon instance by WeaponData (for duplicate detection).
+        /// </summary>
+        public WeaponInstance GetWeaponByData(WeaponData data)
+        {
+            foreach (var weapon in _weapons)
+            {
+                if (weapon.Data == data)
+                {
+                    return weapon;
+                }
+            }
+            return null;
         }
         
         /// <summary>

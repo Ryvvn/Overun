@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _weaponName: Pistol
   _weaponType: 0
-  _rarity: 0
+  _rarity: 1
   _element: 1
   _effectDuration: 3
   _effectStrength: 1

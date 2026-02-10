@@ -8,13 +8,17 @@ namespace Overun.Shop
     {
         public WeaponData Weapon;
         public int BaseCost;
+        public int CurrentCost; // Modified by Panic Market
         public bool IsPurchased;
+        public bool IsGlitch;
         
-        public ShopItem(WeaponData weapon, int baseCost)
+        public ShopItem(WeaponData weapon, int cost)
         {
             Weapon = weapon;
-            BaseCost = baseCost;
+            BaseCost = cost;
+            CurrentCost = cost; // Initially same as base
             IsPurchased = false;
+            IsGlitch = false;
         }
         
         public int GetCost(int ownedCount)

@@ -12,7 +12,9 @@
         "Overun.Player",
         "Overun.UI",
         "Overun.Currency",
-        "Overun.Combat"
+        "Overun.Combat",
+        "Overun.Weapons",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
