@@ -1,216 +1,355 @@
-#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.UI;
 using TMPro;
-using Overun.Shop;
 using Overun.UI;
+using Overun.Shop;
 
-namespace Overun.Editor.Tools
+namespace Overun.Editor
 {
-    public class ShopUIBuilder
+    public class ShopUIBuilder : EditorWindow
     {
-        [MenuItem("Overun/UI/Create Shop UI")]
-        public static void CreateShopUI()
+        [MenuItem("Overun/Build Shop UI")]
+        public static void ShowWindow()
         {
-            // Create Canvas
-            GameObject canvasObj = new GameObject("ShopUI_Canvas");
-            Canvas canvas = canvasObj.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvasObj.AddComponent<CanvasScaler>();
-            canvasObj.AddComponent<GraphicRaycaster>();
+            GetWindow<ShopUIBuilder>("Shop UI Builder");
+        }
+
+        private void OnGUI()
+        {
+            GUILayout.Label("Shop UI Auto-Builder", EditorStyles.boldLabel);
             
-            // Add ShopUI Component
-            ShopUI shopUI = canvasObj.AddComponent<ShopUI>();
-
-            // Create Panel
-            GameObject panelObj = new GameObject("ShopPanel");
-            panelObj.transform.SetParent(canvasObj.transform, false);
-            Image panelImage = panelObj.AddComponent<Image>();
-            panelImage.color = new Color(0, 0, 0, 0.95f);
-            RectTransform panelRect = panelObj.GetComponent<RectTransform>();
-            panelRect.anchorMin = Vector2.zero;
-            panelRect.anchorMax = Vector2.one;
-            panelRect.sizeDelta = Vector2.zero;
-
-            // Title
-            GameObject titleObj = new GameObject("TitleText");
-            titleObj.transform.SetParent(panelObj.transform, false);
-            TextMeshProUGUI titleText = titleObj.AddComponent<TextMeshProUGUI>();
-            titleText.text = "WEAPON SHOP";
-            titleText.fontSize = 48;
-            titleText.alignment = TextAlignmentOptions.Center;
-            titleText.color = Color.yellow;
+            EditorGUILayout.Space(5);
+            GUILayout.Label("Story 6-5: Inventory Panel", EditorStyles.miniBoldLabel);
+            if (GUILayout.Button("Build Inventory Panel & Tooltip"))
+            {
+                BuildUI();
+            }
             
-            RectTransform titleRect = titleObj.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0.3f, 0.9f);
-            titleRect.anchorMax = new Vector2(0.7f, 1f);
+            EditorGUILayout.Space(10);
+            GUILayout.Label("Story 6-6: Lock Mechanic", EditorStyles.miniBoldLabel);
+            if (GUILayout.Button("Add Lock UI to ShopItems"))
+            {
+                AddLockUIToShopItems();
+            }
+        }
 
-            // Item Container
-            GameObject itemsContainerObj = new GameObject("ItemsContainer");
-            itemsContainerObj.transform.SetParent(panelObj.transform, false);
-            HorizontalLayoutGroup hLayout = itemsContainerObj.AddComponent<HorizontalLayoutGroup>();
-            hLayout.childAlignment = TextAnchor.MiddleCenter;
-            hLayout.spacing = 30;
+        private static void BuildUI()
+        {
+            ShopUI shopUI = FindObjectOfType<ShopUI>();
+            if (shopUI == null)
+            {
+                // Try to find the canvas or create it?
+                // For now, assume it exists as per user statement
+                Debug.LogError("ShopUI component not found in scene! Please open the Shop scene or add ShopUI to your canvas.");
+                return;
+            }
+
+            GameObject shopPanel = shopUI.transform.Find("ShopPanel")?.gameObject;
+            if (shopPanel == null)
+            {
+                Debug.LogError("ShopPanel not found under ShopUI!");
+                return;
+            }
+
+            Undo.RegisterCompleteObjectUndo(shopUI.gameObject, "Build Shop UI");
+
+            // 1. Create Inventory Panel
+            CreateInventoryPanel(shopPanel.transform);
+
+            // 2. Create Weapon Tooltip
+            CreateWeaponTooltip(shopUI.transform);
+
+            Debug.Log("Shop UI components built successfully!");
+        }
+
+        private static void CreateInventoryPanel(Transform parent)
+        {
+            Transform existing = parent.Find("InventoryPanel");
+            if (existing != null)
+            {
+                Debug.Log("InventoryPanel already exists.");
+                return;
+            }
+
+            GameObject panelObj = new GameObject("InventoryPanel", typeof(RectTransform));
+            panelObj.transform.SetParent(parent, false);
             
-            RectTransform containerRect = itemsContainerObj.GetComponent<RectTransform>();
-            containerRect.anchorMin = new Vector2(0.05f, 0.2f);
-            containerRect.anchorMax = new Vector2(0.95f, 0.8f);
+            // RectTransform Setup (Bottom Center)
+            RectTransform rect = panelObj.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0f); // Bottom Center
+            rect.anchorMax = new Vector2(0.5f, 0f);
+            rect.pivot = new Vector2(0.5f, 0f);
+            rect.anchoredPosition = new Vector2(0, 20);
+            rect.sizeDelta = new Vector2(600, 100);
 
-            // Item Template (Hidden)
-            GameObject itemTemplate = CreateComplexItemTemplate(itemsContainerObj.transform);
-            itemTemplate.name = "ItemTemplate";
-            itemTemplate.SetActive(false);
+            // Background (Optional)
+            // Image bg = panelObj.AddComponent<Image>();
+            // bg.color = new Color(0, 0, 0, 0.4f);
 
-            // Buttons
-            GameObject rerollBtnObj = CreateButton("RerollButton", "Reroll", panelObj.transform, new Color(1f, 0.5f, 0f));
-            RectTransform rerollRect = rerollBtnObj.GetComponent<RectTransform>();
-            rerollRect.anchorMin = new Vector2(0.4f, 0.05f);
-            rerollRect.anchorMax = new Vector2(0.4f, 0.05f);
-            rerollRect.anchoredPosition = new Vector2(0, 50);
+            // Add Script
+            ShopInventoryUI inventoryUI = panelObj.AddComponent<ShopInventoryUI>();
 
-            GameObject continueBtnObj = CreateButton("ContinueButton", "NEXT WAVE", panelObj.transform, Color.green);
-            RectTransform continueRect = continueBtnObj.GetComponent<RectTransform>();
-            continueRect.anchorMin = new Vector2(0.6f, 0.05f);
-            continueRect.anchorMax = new Vector2(0.6f, 0.05f);
-            continueRect.anchoredPosition = new Vector2(0, 50);
+            // Container for Slots
+            GameObject containerObj = new GameObject("SlotsContainer", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            containerObj.transform.SetParent(panelObj.transform, false);
+            RectTransform containerRect = containerObj.GetComponent<RectTransform>();
+            containerRect.anchorMin = Vector2.zero;
+            containerRect.anchorMax = Vector2.one;
+            containerRect.sizeDelta = Vector2.zero; // Stretch
 
-            // Stats Panel
-            GameObject statsObj = new GameObject("StatsPanel");
-            statsObj.transform.SetParent(panelObj.transform, false);
-            PlayerStatsUI statsUI = statsObj.AddComponent<PlayerStatsUI>();
+            HorizontalLayoutGroup layout = containerObj.GetComponent<HorizontalLayoutGroup>();
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.spacing = 15;
+            layout.childControlWidth = false;
+            layout.childControlHeight = false;
+
+            // Template Slot
+            GameObject slotTemplate = CreateSlotTemplate(panelObj.transform);
+            slotTemplate.name = "SlotTemplate";
+            slotTemplate.SetActive(false); // Hide template
+
+            // Assign References via SerializedObject
+            SerializedObject so = new SerializedObject(inventoryUI);
+            so.FindProperty("_slotsContainer").objectReferenceValue = containerObj.transform;
+            so.FindProperty("_slotPrefab").objectReferenceValue = slotTemplate.GetComponent<InventorySlotUI>();
+            so.ApplyModifiedProperties();
+        }
+
+        private static GameObject CreateSlotTemplate(Transform parent)
+        {
+            GameObject slotObj = new GameObject("SlotTemplate", typeof(RectTransform), typeof(Image), typeof(InventorySlotUI));
+            slotObj.transform.SetParent(parent, false);
             
-            VerticalLayoutGroup vStats = statsObj.AddComponent<VerticalLayoutGroup>();
-            vStats.spacing = 5;
+            RectTransform rect = slotObj.GetComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(80, 80);
             
-            RectTransform statsRect = statsObj.GetComponent<RectTransform>();
-            statsRect.anchorMin = new Vector2(0.02f, 0.1f);
-            statsRect.anchorMax = new Vector2(0.2f, 0.5f);
+            Image bg = slotObj.GetComponent<Image>();
+            bg.color = new Color(0.2f, 0.2f, 0.2f, 1f); // Dark Grid
+
+            // Filled State
+            GameObject filled = CreateRectChild(slotObj.transform, "Filled");
+            Image filledBg = filled.AddComponent<Image>();
+            filledBg.color = new Color(0.3f, 0.3f, 0.3f, 1f);
+
+            GameObject border = CreateRectChild(filled.transform, "Border");
+            Image borderImg = border.AddComponent<Image>();
+            borderImg.type = Image.Type.Sliced;
+            borderImg.color = Color.white;
+            border.GetComponent<RectTransform>().sizeDelta = Vector2.zero; // Stretch
             
-            // Create stat texts
-            TextMeshProUGUI dmgText = CreateText("DmgText", "DMG: x1.0", statsObj.transform, 20, Color.white).GetComponent<TextMeshProUGUI>();
-            TextMeshProUGUI spdText = CreateText("SpdText", "SPD: x1.0", statsObj.transform, 20, Color.white).GetComponent<TextMeshProUGUI>();
-            TextMeshProUGUI hpText = CreateText("HpText", "HP: x1.0", statsObj.transform, 20, Color.white).GetComponent<TextMeshProUGUI>();
-            TextMeshProUGUI critText = CreateText("CritText", "CRIT: 5%", statsObj.transform, 20, Color.white).GetComponent<TextMeshProUGUI>();
+            GameObject icon = CreateRectChild(filled.transform, "Icon");
+            Image iconImg = icon.AddComponent<Image>();
+            iconImg.preserveAspect = true;
+            RectTransform iconRect = icon.GetComponent<RectTransform>();
+            iconRect.anchorMin = new Vector2(0.1f, 0.1f);
+            iconRect.anchorMax = new Vector2(0.9f, 0.9f);
+            iconRect.sizeDelta = Vector2.zero;
 
-            // Setup Stats References via Reflection to avoid public field requirement if private
-            SerializedObject statSo = new SerializedObject(statsUI);
-            statSo.FindProperty("_damageText").objectReferenceValue = dmgText;
-            statSo.FindProperty("_speedText").objectReferenceValue = spdText;
-            statSo.FindProperty("_healthText").objectReferenceValue = hpText;
-            statSo.FindProperty("_critText").objectReferenceValue = critText;
-            statSo.ApplyModifiedProperties();
-
-            // Setup ShopUI References
-            SerializedObject so = new SerializedObject(shopUI);
-            so.FindProperty("_shopPanel").objectReferenceValue = panelObj;
-            so.FindProperty("_itemsContainer").objectReferenceValue = itemsContainerObj.transform;
-            so.FindProperty("_itemTemplate").objectReferenceValue = itemTemplate;
-            so.FindProperty("_rerollButton").objectReferenceValue = rerollBtnObj.GetComponent<Button>();
-            so.FindProperty("_rerollCostText").objectReferenceValue = rerollBtnObj.GetComponentInChildren<TextMeshProUGUI>();
-            so.FindProperty("_continueButton").objectReferenceValue = continueBtnObj.GetComponent<Button>();
-            so.FindProperty("_statsUI").objectReferenceValue = statsUI;
+            // Empty State
+            GameObject empty = CreateRectChild(slotObj.transform, "Empty");
+            Image emptyImg = empty.AddComponent<Image>();
+            emptyImg.color = new Color(0.1f, 0.1f, 0.1f, 0.5f);
+            
+            // Assign to script
+            InventorySlotUI ui = slotObj.GetComponent<InventorySlotUI>();
+            SerializedObject so = new SerializedObject(ui);
+            so.FindProperty("_filledState").objectReferenceValue = filled;
+            so.FindProperty("_emptyState").objectReferenceValue = empty;
+            so.FindProperty("_iconImage").objectReferenceValue = iconImg;
+            so.FindProperty("_rarityBorder").objectReferenceValue = borderImg;
             so.ApplyModifiedProperties();
 
-            Undo.RegisterCreatedObjectUndo(canvasObj, "Create Shop UI");
-            Selection.activeGameObject = canvasObj;
-            
-            Debug.Log("Shop UI Created!");
+            return slotObj;
         }
 
-        private static GameObject CreateComplexItemTemplate(Transform parent)
+        private static void CreateWeaponTooltip(Transform parent)
         {
-            GameObject itemObj = new GameObject("ItemTemplate");
-            itemObj.transform.SetParent(parent, false);
-            
-            // Background
-            Image bg = itemObj.AddComponent<Image>();
-            bg.color = new Color(0.1f, 0.1f, 0.1f);
-            
-            // Border (Slightly larger rect or overlay)
-            GameObject borderObj = new GameObject("Border");
-            borderObj.transform.SetParent(itemObj.transform, false);
-            Image border = borderObj.AddComponent<Image>();
-            border.color = Color.white;
-            border.type = Image.Type.Sliced;
-            RectTransform borderRect = borderObj.GetComponent<RectTransform>();
-            borderRect.anchorMin = Vector2.zero;
-            borderRect.anchorMax = Vector2.one;
-            borderRect.offsetMin = new Vector2(-2, -2);
-            borderRect.offsetMax = new Vector2(2, 2);
-            
-            // ShopItemUI Component
-            ShopItemUI itemUI = itemObj.AddComponent<ShopItemUI>();
-            
-            VerticalLayoutGroup vLayout = itemObj.AddComponent<VerticalLayoutGroup>();
-            vLayout.padding = new RectOffset(10, 10, 10, 10);
-            vLayout.spacing = 10;
-            vLayout.childControlHeight = false;
-            vLayout.childControlWidth = true;
+            if (parent.Find("WeaponTooltip") != null) return;
 
-            // Name
-            TextMeshProUGUI nameText = CreateText("NameText", "Weapon Name", itemObj.transform, 24, Color.white).GetComponent<TextMeshProUGUI>();
-            
-            // Icon
-            GameObject iconObj = new GameObject("Icon");
-            iconObj.transform.SetParent(itemObj.transform, false);
-            Image iconImg = iconObj.AddComponent<Image>();
-            iconImg.color = Color.gray;
-            if(iconObj.GetComponent<LayoutElement>() != null)
-            {
-            iconObj.GetComponent<LayoutElement>().minHeight = 100;
-            }
-            else
-            {
-                iconObj.AddComponent<LayoutElement>().minHeight = 100;
-            }
+            GameObject tooltipObj = new GameObject("WeaponTooltip", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter), typeof(WeaponTooltipUI));
+            tooltipObj.transform.SetParent(parent, false);
 
+            RectTransform rect = tooltipObj.GetComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(250, 150);
+            rect.pivot = new Vector2(0, 1); // Top Left pivot for following mouse? Or logic handles it.
+
+            Image bg = tooltipObj.GetComponent<Image>();
+            bg.color = new Color(0, 0, 0, 0.9f);
+
+            VerticalLayoutGroup layout = tooltipObj.GetComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(10, 10, 10, 10);
+            layout.spacing = 5;
+            layout.childControlHeight = true;
+            layout.childControlWidth = true;
+
+            ContentSizeFitter fitter = tooltipObj.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            // Texts
+            TextMeshProUGUI nameTxt = CreateText(tooltipObj.transform, "NameText", "Weapon Name", 18, FontStyles.Bold);
+            TextMeshProUGUI typeTxt = CreateText(tooltipObj.transform, "TypeText", "Type", 14, FontStyles.Italic);
+            TextMeshProUGUI rarityTxt = CreateText(tooltipObj.transform, "RarityText", "Common", 14, FontStyles.Bold);
+            TextMeshProUGUI statsTxt = CreateText(tooltipObj.transform, "StatsText", "Dmg: 10", 14, FontStyles.Normal);
+
+            // Assign
+            WeaponTooltipUI ui = tooltipObj.GetComponent<WeaponTooltipUI>();
+            SerializedObject so = new SerializedObject(ui);
+            so.FindProperty("_nameText").objectReferenceValue = nameTxt;
+            so.FindProperty("_typeText").objectReferenceValue = typeTxt;
+            so.FindProperty("_rarityText").objectReferenceValue = rarityTxt;
+            so.FindProperty("_statsText").objectReferenceValue = statsTxt;
+            so.FindProperty("_panel").objectReferenceValue = tooltipObj; // Itself
+            so.ApplyModifiedProperties();
             
-            return itemObj;
+            tooltipObj.SetActive(false); // Hide by default
         }
 
-        private static GameObject CreateText(string name, string content, Transform parent, float fontSize, Color color)
+        private static GameObject CreateRectChild(Transform parent, string name)
         {
-            GameObject textObj = new GameObject(name);
-            textObj.transform.SetParent(parent, false);
-            TextMeshProUGUI txt = textObj.AddComponent<TextMeshProUGUI>();
+            GameObject obj = new GameObject(name, typeof(RectTransform));
+            obj.transform.SetParent(parent, false);
+            RectTransform r = obj.GetComponent<RectTransform>();
+            r.anchorMin = Vector2.zero;
+            r.anchorMax = Vector2.one;
+            r.sizeDelta = Vector2.zero;
+            return obj;
+        }
+
+        private static TextMeshProUGUI CreateText(Transform parent, string name, string content, float size, FontStyles style)
+        {
+            GameObject obj = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
+            obj.transform.SetParent(parent, false);
+            
+            TextMeshProUGUI txt = obj.GetComponent<TextMeshProUGUI>();
             txt.text = content;
-            txt.fontSize = fontSize;
-            txt.color = color;
-            txt.alignment = TextAlignmentOptions.Center;
-            return textObj;
+            txt.fontSize = size;
+            txt.fontStyle = style;
+            txt.color = Color.white;
+            txt.alignment = TextAlignmentOptions.Left;
+            
+            return txt;
         }
 
-        private static GameObject CreateButton(string name, string label, Transform parent, Color color)
+        // ============================
+        // Story 6-6: Lock UI
+        // ============================
+        
+        private static void AddLockUIToShopItems()
         {
-            GameObject btnObj = new GameObject(name);
-            btnObj.transform.SetParent(parent, false);
+            // Find the ShopUI to get the item template
+            ShopUI shopUI = FindObjectOfType<ShopUI>();
+            if (shopUI == null)
+            {
+                Debug.LogError("ShopUI not found in scene!");
+                return;
+            }
             
-            Image img = btnObj.AddComponent<Image>();
-            img.color = color;
+            // Get the template via serialized field
+            SerializedObject shopSO = new SerializedObject(shopUI);
+            GameObject template = shopSO.FindProperty("_itemTemplate").objectReferenceValue as GameObject;
             
-            Button btn = btnObj.AddComponent<Button>();
-            btn.targetGraphic = img;
+            if (template == null)
+            {
+                Debug.LogError("ItemTemplate not assigned on ShopUI!");
+                return;
+            }
             
-            RectTransform rect = btnObj.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(160, 50);
-
-            GameObject textObj = new GameObject("Text");
-            textObj.transform.SetParent(btnObj.transform, false);
+            ShopItemUI itemUI = template.GetComponent<ShopItemUI>();
+            if (itemUI == null)
+            {
+                Debug.LogError("ShopItemUI component not found on ItemTemplate!");
+                return;
+            }
             
-            TextMeshProUGUI text = textObj.AddComponent<TextMeshProUGUI>();
-            text.text = label;
-            text.fontSize = 20;
-            text.alignment = TextAlignmentOptions.Center;
-            text.color = Color.black;
+            Undo.RegisterCompleteObjectUndo(template, "Add Lock UI");
             
-            RectTransform textRect = textObj.GetComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.sizeDelta = Vector2.zero;
+            // Check if already added
+            SerializedObject itemSO = new SerializedObject(itemUI);
+            if (itemSO.FindProperty("_lockButton").objectReferenceValue != null)
+            {
+                Debug.Log("Lock UI already exists on ItemTemplate.");
+                return;
+            }
             
-            return btnObj;
+            // Create Lock UI elements
+            CreateLockElements(template.transform, itemUI);
+            
+            EditorUtility.SetDirty(template);
+            Debug.Log("Lock UI added to ShopItemUI template!");
+        }
+        
+        private static void CreateLockElements(Transform itemRoot, ShopItemUI itemUI)
+        {
+            // 1. Lock Overlay - semi-transparent gold tint over the whole card
+            GameObject lockOverlay = new GameObject("LockOverlay", typeof(RectTransform), typeof(Image));
+            lockOverlay.transform.SetParent(itemRoot, false);
+            RectTransform overlayRect = lockOverlay.GetComponent<RectTransform>();
+            overlayRect.anchorMin = Vector2.zero;
+            overlayRect.anchorMax = Vector2.one;
+            overlayRect.sizeDelta = Vector2.zero;
+            Image overlayImg = lockOverlay.GetComponent<Image>();
+            overlayImg.color = new Color(1f, 0.85f, 0.2f, 0.15f); // Subtle gold tint
+            overlayImg.raycastTarget = false;
+            lockOverlay.SetActive(false); // Hidden by default
+            
+            // 2. Lock Button - positioned at top-right corner
+            GameObject lockBtnObj = new GameObject("LockButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            lockBtnObj.transform.SetParent(itemRoot, false);
+            RectTransform btnRect = lockBtnObj.GetComponent<RectTransform>();
+            btnRect.anchorMin = new Vector2(1f, 1f); // Top-right
+            btnRect.anchorMax = new Vector2(1f, 1f);
+            btnRect.pivot = new Vector2(1f, 1f);
+            btnRect.anchoredPosition = new Vector2(-4, -4);
+            btnRect.sizeDelta = new Vector2(32, 32);
+            
+            Image btnBg = lockBtnObj.GetComponent<Image>();
+            btnBg.color = new Color(0.15f, 0.15f, 0.15f, 0.85f); // Dark semi-transparent
+            
+            Button lockBtn = lockBtnObj.GetComponent<Button>();
+            // Setup button colors
+            ColorBlock colors = lockBtn.colors;
+            colors.normalColor = new Color(0.15f, 0.15f, 0.15f, 0.85f);
+            colors.highlightedColor = new Color(0.3f, 0.3f, 0.3f, 0.9f);
+            colors.pressedColor = new Color(0.1f, 0.1f, 0.1f, 1f);
+            colors.selectedColor = colors.normalColor;
+            lockBtn.colors = colors;
+            lockBtn.targetGraphic = btnBg;
+            
+            // 3. Lock Icon - inside the button
+            GameObject lockIconObj = new GameObject("LockIcon", typeof(RectTransform), typeof(Image));
+            lockIconObj.transform.SetParent(lockBtnObj.transform, false);
+            RectTransform iconRect = lockIconObj.GetComponent<RectTransform>();
+            iconRect.anchorMin = new Vector2(0.15f, 0.15f);
+            iconRect.anchorMax = new Vector2(0.85f, 0.85f);
+            iconRect.sizeDelta = Vector2.zero;
+            
+            Image lockIcon = lockIconObj.GetComponent<Image>();
+            lockIcon.color = Color.gray; // Unlocked state = gray
+            lockIcon.raycastTarget = false;
+            
+            // 4. Lock Label ("🔒" text fallback if no sprite)
+            GameObject lockLabelObj = new GameObject("LockLabel", typeof(RectTransform), typeof(TextMeshProUGUI));
+            lockLabelObj.transform.SetParent(lockBtnObj.transform, false);
+            RectTransform labelRect = lockLabelObj.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.sizeDelta = Vector2.zero;
+            
+            TextMeshProUGUI lockLabel = lockLabelObj.GetComponent<TextMeshProUGUI>();
+            lockLabel.text = "\U0001F512"; // 🔒 emoji
+            lockLabel.fontSize = 16;
+            lockLabel.alignment = TextAlignmentOptions.Center;
+            lockLabel.color = Color.gray;
+            lockLabel.raycastTarget = false;
+            
+            // Wire up references
+            SerializedObject so = new SerializedObject(itemUI);
+            so.FindProperty("_lockButton").objectReferenceValue = lockBtn;
+            so.FindProperty("_lockIcon").objectReferenceValue = lockIcon;
+            so.FindProperty("_lockOverlay").objectReferenceValue = lockOverlay;
+            so.ApplyModifiedProperties();
         }
     }
 }
-#endif

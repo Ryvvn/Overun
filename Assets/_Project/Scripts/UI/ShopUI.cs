@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Overun.UI;
 using System;
+using Overun.Currency;
 
 namespace Overun.Shop
 {
@@ -25,6 +26,14 @@ namespace Overun.Shop
         [Header("Stats")]
         [SerializeField] private PlayerStatsUI _statsUI;
         
+        [Header("Feedback Colors")]
+        [SerializeField] private Color _successColor = new Color(0.2f, 0.9f, 0.2f);
+        [SerializeField] private Color _upgradeColor = new Color(1f, 0.8f, 0.2f);
+        [SerializeField] private Color _errorColor = new Color(0.9f, 0.3f, 0.3f);
+        [SerializeField] private Color _warningColor = new Color(0.9f, 0.5f, 0.2f);
+        [SerializeField] private Color _neutralColor = new Color(0.7f, 0.5f, 0.9f);
+        [SerializeField] private Color _panicColor = new Color(1f, 0f, 1f);
+        
         private List<ShopItemUI> _spawnedItems = new List<ShopItemUI>();
         private Coroutine _feedbackCoroutine;
 
@@ -37,9 +46,16 @@ namespace Overun.Shop
             {
                 ShopManager.Instance.OnShopOpened += OpenShop;
                 ShopManager.Instance.OnShopClosed += CloseShop;
-                ShopManager.Instance.OnItemsRefreshed += RefreshDisplay;
+                ShopManager.Instance.OnShopRefreshed += RefreshDisplay;
                 ShopManager.Instance.OnPurchaseAttempt += HandlePurchaseResult;
                 ShopManager.Instance.OnPanicMarket += OnPanicMarket;
+                ShopManager.Instance.OnRerollCostChanged += UpdateRerollButton;
+                
+                // Subscribe to currency changes to update button interactability
+                if (CurrencyManager.Instance != null)
+                {
+                    CurrencyManager.Instance.OnGoldChanged += OnGoldChanged;
+                }
                 
                 // Hide initially
                 _shopPanel.SetActive(false);
@@ -58,9 +74,15 @@ namespace Overun.Shop
             {
                 ShopManager.Instance.OnShopOpened -= OpenShop;
                 ShopManager.Instance.OnShopClosed -= CloseShop;
-                ShopManager.Instance.OnItemsRefreshed -= RefreshDisplay;
+                ShopManager.Instance.OnShopRefreshed -= RefreshDisplay;
                 ShopManager.Instance.OnPurchaseAttempt -= HandlePurchaseResult;
                 ShopManager.Instance.OnPanicMarket -= OnPanicMarket;
+                ShopManager.Instance.OnRerollCostChanged -= UpdateRerollButton;
+            }
+            
+            if (CurrencyManager.Instance != null)
+            {
+                CurrencyManager.Instance.OnGoldChanged -= OnGoldChanged;
             }
         }
         
@@ -82,7 +104,7 @@ namespace Overun.Shop
             // Update Reroll Text
             if (_rerollCostText != null && ShopManager.Instance != null)
             {
-                _rerollCostText.text = $"Reroll ({ShopManager.Instance.RerollCost}g)";
+                UpdateRerollButton(ShopManager.Instance.CurrentRerollCost);
             }
             
             // Clear old items
@@ -115,7 +137,37 @@ namespace Overun.Shop
         
         private void OnRerollClicked()
         {
-            ShopManager.Instance.RerollItems();
+            ShopManager.Instance.TryRerollItems();
+        }
+
+        private void UpdateRerollButton(int cost)
+        {
+            if (_rerollCostText != null)
+            {
+                _rerollCostText.text = $"Reroll ({cost}g)";
+            }
+            
+            UpdateRerollInteractability();
+        }
+        
+        private void OnGoldChanged(int newAmount, int changeAmount)
+        {
+            UpdateRerollInteractability();
+        }
+        
+        private void UpdateRerollInteractability()
+        {
+            if (_rerollButton != null && ShopManager.Instance != null && CurrencyManager.Instance != null)
+            {
+                bool canAfford = CurrencyManager.Instance.CanAfford(ShopManager.Instance.CurrentRerollCost);
+                _rerollButton.interactable = canAfford;
+                
+                // Visual feedback for disabled state (optional, if button transition isn't enough)
+                if (_rerollCostText != null)
+                {
+                    _rerollCostText.color = canAfford ? Color.white : _errorColor;
+                }
+            }
         }
         
         private void OnContinueClicked()
@@ -132,23 +184,23 @@ namespace Overun.Shop
             {
                 case PurchaseResult.Success:
                     message = $"Purchased {item.Weapon.WeaponName}!";
-                    color = new Color(0.2f, 0.9f, 0.2f); // Green
+                    color = _successColor;
                     break;
                 case PurchaseResult.Upgraded:
                     message = $"UPGRADED {item.Weapon.WeaponName}!";
-                    color = new Color(1f, 0.8f, 0.2f); // Gold
+                    color = _upgradeColor;
                     break;
                 case PurchaseResult.InsufficientGold:
                     message = "Not enough gold!";
-                    color = new Color(0.9f, 0.3f, 0.3f); // Red
+                    color = _errorColor;
                     break;
                 case PurchaseResult.InventoryFull:
                     message = "Inventory full!";
-                    color = new Color(0.9f, 0.5f, 0.2f); // Orange
+                    color = _warningColor;
                     break;
                 case PurchaseResult.AlreadyMaxTier:
                     message = "Already at MAX tier!";
-                    color = new Color(0.7f, 0.5f, 0.9f); // Purple
+                    color = _neutralColor;
                     break;
             }
             
@@ -157,7 +209,7 @@ namespace Overun.Shop
         
         private void OnPanicMarket()
         {
-            ShowFeedback("PANIC MARKET!", new Color(1f, 0f, 1f)); // Magenta
+            ShowFeedback("PANIC MARKET!", _panicColor);
         }
         
         private void ShowFeedback(string message, Color color)

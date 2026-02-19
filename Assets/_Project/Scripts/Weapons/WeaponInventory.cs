@@ -63,7 +63,7 @@ namespace Overun.Weapons
                     OnInventoryChanged?.Invoke();
                     return AddWeaponResult.Upgraded;
                 }
-                else
+                else if(_weapons.Count == _maxSlots)
                 {
                     Debug.Log($"[WeaponInventory] {data.WeaponName} already at max tier!");
                     return AddWeaponResult.AlreadyMaxTier;
@@ -100,7 +100,7 @@ namespace Overun.Weapons
         {
             foreach (var weapon in _weapons)
             {
-                if (weapon.Data == data)
+                if (weapon.Data == data && weapon.CanStack())
                 {
                     return weapon;
                 }

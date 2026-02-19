@@ -22,6 +22,12 @@ namespace Overun.UI
         [SerializeField] private TextMeshProUGUI _typeText;
         [SerializeField] private GameObject _purchasedOverlay;
         
+        [Header("Lock")]
+        [SerializeField] private Button _lockButton;
+        [SerializeField] private Image _lockIcon;
+        [SerializeField] private GameObject _lockOverlay;
+        [SerializeField] private Color _lockedBorderColor = new Color(1f, 0.85f, 0.2f); // Gold
+        
         [Header("Glitch Effect")]
         [SerializeField] private GameObject _glitchOverlay;
         [SerializeField] private TextMeshProUGUI _glitchText;
@@ -30,6 +36,7 @@ namespace Overun.UI
         private ShopItem _currentItem;
         private int _index;
         private Coroutine _glitchCoroutine;
+        private Color _originalBorderColor;
 
         private ShopUI _shopUI;
 
@@ -41,20 +48,31 @@ namespace Overun.UI
             {
                 _button.onClick.AddListener(OnClicked);
             }
+            
+            if (_lockButton != null)
+            {
+                _lockButton.onClick.AddListener(OnLockClicked);
+            }
+            
             _shopUI = FindObjectOfType<ShopUI>();
-
         }
 
         private void OnEnable()
         {
-           _shopUI.OnShopUIOpen += OpenShopUI;
-           _shopUI.OnShopUIClose += CloseShopUI;
+            if(_shopUI != null)
+            {
+                _shopUI.OnShopUIOpen += OpenShopUI;
+                _shopUI.OnShopUIClose += CloseShopUI;
+            }
         }
 
         private void OnDisable()
         {
-            _shopUI.OnShopUIOpen -= OpenShopUI;
-            _shopUI.OnShopUIClose -= CloseShopUI;
+            if(_shopUI != null)
+            {
+                _shopUI.OnShopUIOpen -= OpenShopUI;
+                _shopUI.OnShopUIClose -= CloseShopUI;
+            }
         }
       
         
@@ -83,6 +101,35 @@ namespace Overun.UI
             if (_purchasedOverlay != null)
             {
                 _purchasedOverlay.SetActive(item.IsPurchased);
+            }
+            
+            // Lock state
+            UpdateLockVisuals(item);
+        }
+        
+        private void UpdateLockVisuals(ShopItem item)
+        {
+            if (_lockOverlay != null)
+            {
+                _lockOverlay.SetActive(item.IsLocked);
+            }
+            
+            if (_lockIcon != null)
+            {
+                _lockIcon.color = item.IsLocked ? _lockedBorderColor : Color.gray;
+            }
+            
+            if (_lockButton != null)
+            {
+                // Can't lock purchased items
+                _lockButton.gameObject.SetActive(!item.IsPurchased);
+            }
+            
+            // Subtle border glow when locked
+            if (item.IsLocked && _borderImage != null)
+            {
+                _originalBorderColor = _borderImage.color;
+                _borderImage.color = _lockedBorderColor;
             }
         }
         
@@ -204,8 +251,16 @@ namespace Overun.UI
         {
             if (ShopManager.Instance != null && !(_currentItem?.IsPurchased ?? true))
             {
-                bool success = ShopManager.Instance.TryBuyItem(_index);
-                // ShopUI will refresh the display via event
+                ShopManager.Instance.TryBuyItem(_index);
+                // ShopUI handles all feedback via OnPurchaseAttempt event
+            }
+        }
+        
+        private void OnLockClicked()
+        {
+            if (ShopManager.Instance != null && _currentItem != null && !_currentItem.IsPurchased)
+            {
+                ShopManager.Instance.TryLockItem(_index);
             }
         }
     }

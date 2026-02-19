@@ -31,22 +31,35 @@ namespace Overun.Shop
         [Header("Configuration")]
         [SerializeField] private List<WeaponData> _availableWeapons;
         [SerializeField] private int _itemsPerShop = 3;
-        [SerializeField] private int _rerollCost = 5;
+
         
         [Header("State")]
         [SerializeField] private bool _isShopOpen = false;
         [SerializeField] private List<ShopItem> _currentItems = new List<ShopItem>();
         
+        private const int GLITCH_COST = 50;
+        private const float PANIC_MARKET_MIN = 0.5f;
+        private const float PANIC_MARKET_MAX = 1.5f;
+        private const int BASE_COST_MULTIPLIER = 50;
+        
+        private WeaponInventory _playerInventory;
+        
         // Events
         public event Action OnShopOpened;
         public event Action OnShopClosed;
-        public event Action OnItemsRefreshed;
+        public int CurrentRerollCost { get; private set; } = 5;
+        private const int BASE_REROLL_COST = 5;
+        private const int REROLL_COST_INCREMENT = 5;
+        private const int LOCK_COST = 2;
+
+        public event Action OnShopRefreshed;
+        public event Action<int> OnRerollCostChanged;
+        public event Action<int, bool> OnItemLocked; // index, isLocked
         public event Action<PurchaseResult, ShopItem> OnPurchaseAttempt; // UI feedback
         public event Action OnPanicMarket; // Panic Market triggered
         
         public bool IsShopOpen => _isShopOpen;
         public List<ShopItem> CurrentItems => _currentItems;
-        public int RerollCost => _rerollCost;
         
         private void Awake()
         {
@@ -62,6 +75,16 @@ namespace Overun.Shop
         {
             if (_isShopOpen) return;
             
+            // Cache player inventory if not already found
+            if (_playerInventory == null)
+            {
+                GameObject player = GameObject.FindGameObjectWithTag("Player");
+                if (player != null)
+                {
+                    _playerInventory = player.GetComponent<WeaponInventory>();
+                }
+            }
+            
             // Wait for the clean up the wave to finish, wait for few seconds
             StartCoroutine(WaitToOpenShop());
         }
@@ -71,7 +94,7 @@ namespace Overun.Shop
             yield return new WaitForSeconds(2f);
             _isShopOpen = true;
             //Time.timeScale = 0f; // Pause game
-            RefreshItems(true); // Free refresh on open
+            GenerateShopItems(); // Free refresh on open
             OnShopOpened?.Invoke();
 
             // Show the cursor 
@@ -97,43 +120,153 @@ namespace Overun.Shop
             Debug.Log("[ShopManager] Shop Closed");
         }
         
-        public void RerollItems()
+        public void GenerateShopItems()
         {
-            if (CurrencyManager.Instance.SpendGold(_rerollCost))
+            // Reset reroll cost on new wave/shop generation
+            ResetShopState();
+            
+            _currentItems.Clear();
+
+            // Normal Slots based on configuration
+            for (int i = 0; i < _itemsPerShop; i++)
             {
-                RefreshItems(false);
+                if (_availableWeapons.Count > 0)
+                {
+                    WeaponData randomWeapon = _availableWeapons[UnityEngine.Random.Range(0, _availableWeapons.Count)];
+                    int baseCost = CalculateCost(randomWeapon);
+                    ShopItem item = new ShopItem(randomWeapon, baseCost);
+                    _currentItems.Add(item);
+                }
+            }
+            
+            // 1 Glitch Slot (Index after normal slots)
+            if (_availableWeapons.Count > 0)
+            {
+                WeaponData glitchWeapon = _availableWeapons[UnityEngine.Random.Range(0, _availableWeapons.Count)];
+                ShopItem glitchItem = new ShopItem(glitchWeapon, GLITCH_COST); 
+                glitchItem.IsGlitch = true;
+                _currentItems.Add(glitchItem);
+            }
+            
+            OnShopRefreshed?.Invoke();
+        }
+
+        public void ResetShopState()
+        {
+            CurrentRerollCost = BASE_REROLL_COST;
+            OnRerollCostChanged?.Invoke(CurrentRerollCost);
+            
+            // Clear all locks
+            foreach (var item in _currentItems)
+            {
+                item.IsLocked = false;
             }
         }
         
-        private void RefreshItems(bool free)
+        /// <summary>
+        /// Toggle lock on a shop item. Locking costs LOCK_COST gold, unlocking is free.
+        /// </summary>
+        public bool TryLockItem(int index)
         {
-            _currentItems.Clear();
+            if (index < 0 || index >= _currentItems.Count) return false;
             
-            if (_availableWeapons == null || _availableWeapons.Count == 0) return;
+            ShopItem item = _currentItems[index];
             
-            // 3 Normal Slots
-            for (int i = 0; i < 3; i++)
+            // Can't lock purchased items
+            if (item.IsPurchased) return false;
+            
+            if (item.IsLocked)
             {
-                WeaponData randomWeapon = _availableWeapons[UnityEngine.Random.Range(0, _availableWeapons.Count)];
-                int baseCost = CalculateCost(randomWeapon);
-                ShopItem item = new ShopItem(randomWeapon, baseCost);
-                _currentItems.Add(item);
+                // Unlock is free
+                item.IsLocked = false;
+                OnItemLocked?.Invoke(index, false);
+                OnShopRefreshed?.Invoke();
+                Debug.Log($"[Shop] Unlocked {item.Weapon.WeaponName}");
+                return true;
+            }
+            else
+            {
+                // Lock costs gold
+                if (!CurrencyManager.Instance.CanAfford(LOCK_COST))
+                {
+                    Debug.Log($"[Shop] Cannot afford to lock! Need {LOCK_COST}g");
+                    return false;
+                }
+                
+                CurrencyManager.Instance.SpendGold(LOCK_COST);
+                item.IsLocked = true;
+                OnItemLocked?.Invoke(index, true);
+                OnShopRefreshed?.Invoke();
+                Debug.Log($"[Shop] Locked {item.Weapon.WeaponName} for {LOCK_COST}g");
+                return true;
+            }
+        }
+
+        public void TryRerollItems()
+        {
+            // Check if ALL remaining items are locked/purchased (nothing to reroll)
+            bool hasRerollableItems = false;
+            foreach (var item in _currentItems)
+            {
+                if (!item.IsLocked && !item.IsPurchased)
+                {
+                    hasRerollableItems = true;
+                    break;
+                }
             }
             
-            // 1 Glitch Slot (Index 3)
-            WeaponData glitchWeapon = _availableWeapons[UnityEngine.Random.Range(0, _availableWeapons.Count)];
-            ShopItem glitchItem = new ShopItem(glitchWeapon, 50); 
-            glitchItem.IsGlitch = true;
-            _currentItems.Add(glitchItem);
+            if (!hasRerollableItems)
+            {
+                Debug.Log("[Shop] All items are locked/purchased, nothing to reroll.");
+                return;
+            }
             
-            OnItemsRefreshed?.Invoke();
+            if (CurrencyManager.Instance.CanAfford(CurrentRerollCost))
+            {
+                CurrencyManager.Instance.SpendGold(CurrentRerollCost);
+                
+                // Increase cost for next time
+                CurrentRerollCost += REROLL_COST_INCREMENT;
+                OnRerollCostChanged?.Invoke(CurrentRerollCost);
+                
+                // Only replace unlocked, unpurchased items
+                for (int i = 0; i < _currentItems.Count; i++)
+                {
+                    ShopItem existing = _currentItems[i];
+                    
+                    // Skip locked and purchased items
+                    if (existing.IsLocked || existing.IsPurchased) continue;
+                    
+                    if (_availableWeapons.Count > 0)
+                    {
+                        if (existing.IsGlitch)
+                        {
+                            // Regenerate glitch slot
+                            WeaponData glitchWeapon = _availableWeapons[UnityEngine.Random.Range(0, _availableWeapons.Count)];
+                            ShopItem glitchItem = new ShopItem(glitchWeapon, GLITCH_COST);
+                            glitchItem.IsGlitch = true;
+                            _currentItems[i] = glitchItem;
+                        }
+                        else
+                        {
+                            // Regenerate normal slot
+                            WeaponData randomWeapon = _availableWeapons[UnityEngine.Random.Range(0, _availableWeapons.Count)];
+                            int baseCost = CalculateCost(randomWeapon);
+                            ShopItem newItem = new ShopItem(randomWeapon, baseCost);
+                            _currentItems[i] = newItem;
+                        }
+                    }
+                }
+                
+                OnShopRefreshed?.Invoke();
+            }
         }
         
         private int CalculateCost(WeaponData weapon)
         {
              // Base cost + Rarity scaling
              int rarityMult = (int)weapon.Rarity + 1; // 1 to 5
-             return 50 * rarityMult;
+             return BASE_COST_MULTIPLIER * rarityMult;
         }
         
         public PurchaseResult TryBuyItem(int index)
@@ -160,21 +293,20 @@ namespace Overun.Shop
             }
             
             // Try to add to inventory
-            GameObject player = GameObject.FindGameObjectWithTag("Player");
-            if (player == null)
+            if (_playerInventory == null)
             {
-                Debug.LogError("[Shop] Player not found!");
-                return PurchaseResult.InventoryFull;
+                // Try one last time to find it (in case player was spawned late)
+                GameObject player = GameObject.FindGameObjectWithTag("Player");
+                if (player != null) _playerInventory = player.GetComponent<WeaponInventory>();
+                
+                if (_playerInventory == null)
+                {
+                    Debug.LogError("[Shop] WeaponInventory not found!");
+                    return PurchaseResult.InventoryFull;
+                }
             }
             
-            var inventory = player.GetComponent<WeaponInventory>();
-            if (inventory == null)
-            {
-                Debug.LogError("[Shop] WeaponInventory not found on player!");
-                return PurchaseResult.InventoryFull;
-            }
-            
-            AddWeaponResult addResult = inventory.TryAddWeapon(item.Weapon);
+            AddWeaponResult addResult = _playerInventory.TryAddWeapon(item.Weapon);
             
             switch (addResult)
             {
@@ -184,7 +316,7 @@ namespace Overun.Shop
                     HandleGlitchReveal(item);
                     TriggerPanicMarket();
                     OnPurchaseAttempt?.Invoke(PurchaseResult.Success, item);
-                    OnItemsRefreshed?.Invoke();
+                    OnShopRefreshed?.Invoke();
                     Debug.Log($"[Shop] Purchased {item.Weapon.WeaponName} for {cost}g");
                     return PurchaseResult.Success;
                     
@@ -194,7 +326,7 @@ namespace Overun.Shop
                     HandleGlitchReveal(item);
                     TriggerPanicMarket();
                     OnPurchaseAttempt?.Invoke(PurchaseResult.Upgraded, item);
-                    OnItemsRefreshed?.Invoke();
+                    OnShopRefreshed?.Invoke();
                     Debug.Log($"[Shop] UPGRADED {item.Weapon.WeaponName} for {cost}g!");
                     return PurchaseResult.Upgraded;
                     
@@ -234,7 +366,7 @@ namespace Overun.Shop
                 if (!item.IsPurchased && !item.IsGlitch) // Don't change glitch slot price
                 {
                     // +/- 50% variance
-                    float variance = UnityEngine.Random.Range(0.5f, 1.5f);
+                    float variance = UnityEngine.Random.Range(PANIC_MARKET_MIN, PANIC_MARKET_MAX);
                     int newCost = Mathf.RoundToInt(item.BaseCost * variance);
                     item.CurrentCost = Mathf.Max(1, newCost); // Minimum 1 gold
                     anyChanged = true;
@@ -245,7 +377,7 @@ namespace Overun.Shop
             {
                 Debug.Log("[Shop] PANIC MARKET! Prices shuffled!");
                 OnPanicMarket?.Invoke();
-                OnItemsRefreshed?.Invoke();
+                OnShopRefreshed?.Invoke();
             }
         }
     }

@@ -11,6 +11,7 @@ namespace Overun.Shop
         public int CurrentCost; // Modified by Panic Market
         public bool IsPurchased;
         public bool IsGlitch;
+        public bool IsLocked;
         
         public ShopItem(WeaponData weapon, int cost)
         {
@@ -19,6 +20,7 @@ namespace Overun.Shop
             CurrentCost = cost; // Initially same as base
             IsPurchased = false;
             IsGlitch = false;
+            IsLocked = false;
         }
         
         public int GetCost(int ownedCount)

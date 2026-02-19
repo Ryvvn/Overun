@@ -107,7 +107,9 @@ namespace Overun.Weapons
             var inventory = other.GetComponent<WeaponInventory>();
             if (inventory != null)
             {
-                bool collected = inventory.TryAddWeapon(_weaponData);
+                bool collected = 
+                inventory.TryAddWeapon(_weaponData) == AddWeaponResult.Added ||
+                inventory.TryAddWeapon(_weaponData) == AddWeaponResult.Upgraded;
                 if (collected)
                 {
                     OnCollected();
