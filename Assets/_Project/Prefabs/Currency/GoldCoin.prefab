@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 3877504983247086686}
   - component: {fileID: 3038539996162780942}
   - component: {fileID: 6615701071201874721}
+  - component: {fileID: 6947572131909519108}
   m_Layer: 0
   m_Name: GoldCoin
   m_TagString: Untagged
@@ -123,3 +124,20 @@ MonoBehaviour:
   _bobHeight: 0.3
   _rotateSpeed: 90
   _magnetSpeed: 10
+--- !u!114 &6947572131909519108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9109777255648534949}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d611432ea8bb444ba24cf09a7f041d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _sparkleColor: {r: 1, g: 0.85, b: 0.2, a: 1}
+  _emissionRate: 5
+  _sparkleSize: 0.1
+  _burstCount: 15
+  _burstSpeed: 2

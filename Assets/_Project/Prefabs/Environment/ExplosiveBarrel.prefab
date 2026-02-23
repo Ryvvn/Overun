@@ -124,6 +124,8 @@ MonoBehaviour:
   _explosionRadius: 5
   _explosionDamage: 200
   _explosionForce: 500
+  _explosionDuration: 1
+  _shakeIntensity: 5
   _explosionEffect: {fileID: 0}
   _damageFlashColor: {r: 1, g: 0, b: 0, a: 1}
   _damageLayers:

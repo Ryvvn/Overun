@@ -29,7 +29,8 @@ namespace Overun.Shop
         public static ShopManager Instance { get; private set; }
         
         [Header("Configuration")]
-        [SerializeField] private List<WeaponData> _availableWeapons;
+        [SerializeField] private WeaponPoolConfig _weaponPool;
+        [SerializeField] private List<WeaponData> _availableWeapons; // Legacy fallback
         [SerializeField] private int _itemsPerShop = 3;
 
         
@@ -126,23 +127,27 @@ namespace Overun.Shop
             ResetShopState();
             
             _currentItems.Clear();
+            
+            // Track selected weapons to prevent duplicates
+            HashSet<WeaponData> selectedWeapons = new HashSet<WeaponData>();
 
             // Normal Slots based on configuration
             for (int i = 0; i < _itemsPerShop; i++)
             {
-                if (_availableWeapons.Count > 0)
+                WeaponData weapon = SelectWeapon(selectedWeapons);
+                if (weapon != null)
                 {
-                    WeaponData randomWeapon = _availableWeapons[UnityEngine.Random.Range(0, _availableWeapons.Count)];
-                    int baseCost = CalculateCost(randomWeapon);
-                    ShopItem item = new ShopItem(randomWeapon, baseCost);
+                    selectedWeapons.Add(weapon);
+                    int baseCost = CalculateCost(weapon);
+                    ShopItem item = new ShopItem(weapon, baseCost);
                     _currentItems.Add(item);
                 }
             }
             
-            // 1 Glitch Slot (Index after normal slots)
-            if (_availableWeapons.Count > 0)
+            // 1 Glitch Slot (draws from full pool, equal weight)
+            WeaponData glitchWeapon = SelectGlitchWeapon();
+            if (glitchWeapon != null)
             {
-                WeaponData glitchWeapon = _availableWeapons[UnityEngine.Random.Range(0, _availableWeapons.Count)];
                 ShopItem glitchItem = new ShopItem(glitchWeapon, GLITCH_COST); 
                 glitchItem.IsGlitch = true;
                 _currentItems.Add(glitchItem);
@@ -229,6 +234,13 @@ namespace Overun.Shop
                 CurrentRerollCost += REROLL_COST_INCREMENT;
                 OnRerollCostChanged?.Invoke(CurrentRerollCost);
                 
+                // Build exclude set from locked items for duplicate prevention
+                HashSet<WeaponData> excludeSet = new HashSet<WeaponData>();
+                foreach (var item in _currentItems)
+                {
+                    if (item.IsLocked || item.IsPurchased) excludeSet.Add(item.Weapon);
+                }
+                
                 // Only replace unlocked, unpurchased items
                 for (int i = 0; i < _currentItems.Count; i++)
                 {
@@ -237,20 +249,24 @@ namespace Overun.Shop
                     // Skip locked and purchased items
                     if (existing.IsLocked || existing.IsPurchased) continue;
                     
-                    if (_availableWeapons.Count > 0)
+                    if (existing.IsGlitch)
                     {
-                        if (existing.IsGlitch)
+                        // Regenerate glitch slot (uniform selection)
+                        WeaponData glitchWeapon = SelectGlitchWeapon();
+                        if (glitchWeapon != null)
                         {
-                            // Regenerate glitch slot
-                            WeaponData glitchWeapon = _availableWeapons[UnityEngine.Random.Range(0, _availableWeapons.Count)];
                             ShopItem glitchItem = new ShopItem(glitchWeapon, GLITCH_COST);
                             glitchItem.IsGlitch = true;
                             _currentItems[i] = glitchItem;
                         }
-                        else
+                    }
+                    else
+                    {
+                        // Regenerate normal slot (weighted selection, no dupes)
+                        WeaponData randomWeapon = SelectWeapon(excludeSet);
+                        if (randomWeapon != null)
                         {
-                            // Regenerate normal slot
-                            WeaponData randomWeapon = _availableWeapons[UnityEngine.Random.Range(0, _availableWeapons.Count)];
+                            excludeSet.Add(randomWeapon);
                             int baseCost = CalculateCost(randomWeapon);
                             ShopItem newItem = new ShopItem(randomWeapon, baseCost);
                             _currentItems[i] = newItem;
@@ -379,6 +395,49 @@ namespace Overun.Shop
                 OnPanicMarket?.Invoke();
                 OnShopRefreshed?.Invoke();
             }
+        }
+        
+        // ============================
+        // Weapon Pool Selection
+        // ============================
+        
+        /// <summary>
+        /// Select a weapon using the pool config (weighted by rarity).
+        /// Falls back to legacy _availableWeapons list if no pool is set.
+        /// </summary>
+        private WeaponData SelectWeapon(HashSet<WeaponData> excludeSet = null)
+        {
+            if (_weaponPool != null && _weaponPool.Count > 0)
+            {
+                return _weaponPool.SelectWeaponWeighted(excludeSet);
+            }
+            
+            // Legacy fallback
+            if (_availableWeapons != null && _availableWeapons.Count > 0)
+            {
+                return _availableWeapons[UnityEngine.Random.Range(0, _availableWeapons.Count)];
+            }
+            
+            return null;
+        }
+        
+        /// <summary>
+        /// Select a weapon for the Glitch slot (uniform/equal weight).
+        /// </summary>
+        private WeaponData SelectGlitchWeapon()
+        {
+            if (_weaponPool != null && _weaponPool.Count > 0)
+            {
+                return _weaponPool.SelectWeaponUniform();
+            }
+            
+            // Legacy fallback
+            if (_availableWeapons != null && _availableWeapons.Count > 0)
+            {
+                return _availableWeapons[UnityEngine.Random.Range(0, _availableWeapons.Count)];
+            }
+            
+            return null;
         }
     }
     

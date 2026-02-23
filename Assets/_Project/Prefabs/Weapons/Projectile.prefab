@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 712172113775275891}
   - component: {fileID: 7999153643076188611}
   - component: {fileID: 9155551781421243763}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Projectile
   m_TagString: Projectile
   m_Icon: {fileID: 0}
@@ -99,7 +99,7 @@ SphereCollider:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 0
@@ -150,3 +150,5 @@ MonoBehaviour:
   _lifetime: 3
   _damage: 10
   _elementType: 0
+  _hitEffectPrefab: {fileID: 4542920296689939736, guid: 82bcb53db8eb14a49b60676efde3d3f0,
+    type: 3}

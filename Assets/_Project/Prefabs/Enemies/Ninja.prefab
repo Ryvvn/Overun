@@ -330,6 +330,7 @@ GameObject:
   - component: {fileID: 3233189112270000128}
   - component: {fileID: 8862810168968046200}
   - component: {fileID: 1535051673740226314}
+  - component: {fileID: 3578595128915545519}
   m_Layer: 0
   m_Name: Ninja
   m_TagString: Untagged
@@ -564,6 +565,23 @@ MonoBehaviour:
   _speedMultiplier: 1.8
   _healthMultiplier: 0.5
   _damageMultiplier: 0.7
+--- !u!114 &3578595128915545519
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8698609959118632036}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8dddaa35fa767e7489f138aebc8d6190, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _deathVFXPrefab: {fileID: 0}
+  _destroyDelay: 2
+  _burstCount: 20
+  _burstRadius: 0.5
+  _burstSpeed: 3
 --- !u!1 &8707503314472782987
 GameObject:
   m_ObjectHideFlags: 0

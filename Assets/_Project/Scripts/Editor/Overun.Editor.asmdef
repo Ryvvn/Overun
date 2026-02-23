@@ -7,6 +7,8 @@
         "Overun.Player",
         "Overun.Weapons",
         "Overun.UI",
+        "Overun.Shop",
+        "Overun.Combat",
         "Unity.TextMeshPro"
     ],
     "includePlatforms": [

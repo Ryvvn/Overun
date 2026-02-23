@@ -15,7 +15,7 @@ MonoBehaviour:
   _weaponName: Pistol
   _weaponType: 0
   _rarity: 1
-  _element: 1
+  _element: 4
   _effectDuration: 3
   _effectStrength: 1
   _isHitScan: 1
@@ -34,3 +34,6 @@ MonoBehaviour:
   _maxStacks: 5
   _icon: {fileID: 21300000, guid: 9ef49c76e4492784aa42f28a80778d0f, type: 3}
   _rarityColor: {r: 0, g: 1, b: 0.0791831, a: 1}
+  _weaponModelPrefab: {fileID: 5331605864275366465, guid: 08c4a2e5cdc7ab34fb6f86bf3e1099f9,
+    type: 3}
+  _modelRotationOffset: {x: 0, y: 180, z: 0}

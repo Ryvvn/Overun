@@ -17,6 +17,9 @@ namespace Overun.Weapons
         [SerializeField] private float _damage = 10f;
         [SerializeField] private ElementType _elementType = ElementType.None;
         
+        [Header("VFX")]
+        [SerializeField] private GameObject _hitEffectPrefab;
+        
         private Rigidbody _rigidbody;
         private float _spawnTime;
         
@@ -64,8 +67,24 @@ namespace Overun.Weapons
                 barrel.TakeDamage(_damage);
             }
             
+            // VFX: Spawn hit effect at impact point
+            SpawnHitEffect(other);
+            
             // Return to pool
             ReturnToPool();
+        }
+        
+        private void SpawnHitEffect(Collider other)
+        {
+            if (_hitEffectPrefab == null) return;
+            
+            // Get closest point on the collider surface
+            Vector3 hitPoint = other.ClosestPoint(transform.position);
+            Vector3 hitNormal = (transform.position - hitPoint).normalized;
+            
+            GameObject fx = Instantiate(_hitEffectPrefab, hitPoint, 
+                hitNormal != Vector3.zero ? Quaternion.LookRotation(hitNormal) : Quaternion.identity);
+            Destroy(fx, 2f);
         }
         
         private void ReturnToPool()

@@ -4,6 +4,7 @@ using Overun.Core;
 using Overun.Player;
 using Overun.Enemies;
 using Overun.Combat;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Overun.Weapons
@@ -18,6 +19,11 @@ namespace Overun.Weapons
         [SerializeField] private WeaponInventory _inventory;
         [SerializeField] private Transform _firePoint;
         [SerializeField] private Camera _playerCamera;
+        
+        [Header("VFX")]
+        [SerializeField] private ParticleSystem _muzzleFlash;
+        [SerializeField] private TrailRenderer _bulletTrailPrefab;
+        [SerializeField] private GameObject _hitEffectPrefab;
         
         [Header("Auto-Fire Settings")]
         [SerializeField] private float _autoFireCheckInterval = 0.2f;
@@ -272,6 +278,7 @@ namespace Overun.Weapons
             }
             
             weapon.RecordFire();
+            PlayFireVFX();
         }
         
         private void ShootHitScan(WeaponInstance weapon, Vector3 direction)
@@ -298,14 +305,22 @@ namespace Overun.Weapons
                 var barrel = hit.collider.GetComponent<Environment.ExplosiveBarrel>();
                 if (barrel != null)
                 {
-                    // Pass damage only for now, could expand barrel to take element
                     barrel.TakeDamage(weapon.Damage);
                 }
+                
+                // VFX: Hit effect at impact point
+                SpawnHitEffect(hit.point, hit.normal);
+                
+                // VFX: Bullet trail to hit point
+                SpawnBulletTrail(_firePoint.position, hit.point);
             }
             else
             {
                 // Draw miss ray
                 Debug.DrawRay(_firePoint.position, direction * maxRange, Color.red, 1f);
+                
+                // VFX: Bullet trail to max range
+                SpawnBulletTrail(_firePoint.position, _firePoint.position + direction * maxRange);
             }
         }
         
@@ -354,6 +369,51 @@ namespace Overun.Weapons
                     projectile.ElementType = data.Element;
                 }
             }
+        }
+        
+        #endregion
+        
+        #region VFX
+        
+        private void PlayFireVFX()
+        {
+            if (_muzzleFlash != null)
+            {
+                _muzzleFlash.Play();
+            }
+        }
+        
+        private void SpawnHitEffect(Vector3 point, Vector3 normal)
+        {
+            if (_hitEffectPrefab == null) return;
+            GameObject fx = Instantiate(_hitEffectPrefab, point, Quaternion.LookRotation(normal));
+            Destroy(fx, 2f);
+        }
+        
+        private void SpawnBulletTrail(Vector3 start, Vector3 end)
+        {
+            if (_bulletTrailPrefab == null) return;
+            TrailRenderer trail = Instantiate(_bulletTrailPrefab, start, Quaternion.identity);
+            StartCoroutine(AnimateBulletTrail(trail, start, end));
+        }
+        
+        private IEnumerator AnimateBulletTrail(TrailRenderer trail, Vector3 start, Vector3 end)
+        {
+            float distance = Vector3.Distance(start, end);
+            float duration = distance / 200f; // Trail speed
+            float elapsed = 0f;
+            
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = elapsed / duration;
+                trail.transform.position = Vector3.Lerp(start, end, t);
+                yield return null;
+            }
+            
+            // Wait for trail to fade then destroy
+            yield return new WaitForSeconds(trail.time);
+            Destroy(trail.gameObject);
         }
         
         #endregion

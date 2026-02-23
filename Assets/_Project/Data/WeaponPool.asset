@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad9f0b375155cbe44808e4de77f124a0, type: 3}
+  m_Name: WeaponPool
+  m_EditorClassIdentifier: 
+  _weapons:
+  - {fileID: 11400000, guid: adb45963664219a42b85d15d7eb25412, type: 2}
+  - {fileID: 11400000, guid: ff668dc88055915408bdf811cb078344, type: 2}
+  - {fileID: 11400000, guid: 2415c57430c1ead459f40d7149121074, type: 2}
+  - {fileID: 11400000, guid: 61ca0419942368c4eb00c3a41ea3500a, type: 2}
+  - {fileID: 11400000, guid: cf0a8ecd3a406154ab8343651efd3500, type: 2}
+  _commonWeight: 40
+  _uncommonWeight: 30
+  _rareWeight: 20
+  _epicWeight: 8
+  _legendaryWeight: 2

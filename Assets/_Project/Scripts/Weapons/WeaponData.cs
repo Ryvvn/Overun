@@ -42,6 +42,9 @@ namespace Overun.Weapons
         [Header("Visuals")]
         [SerializeField] private Sprite _icon;
         [SerializeField] private Color _rarityColor = Color.white;
+        [SerializeField] private GameObject _weaponModelPrefab;
+        [Tooltip("Euler rotation offset to correct weapon model facing direction")]
+        [SerializeField] private Vector3 _modelRotationOffset = Vector3.zero;
         
         // Properties
         public string WeaponName => _weaponName;
@@ -64,6 +67,8 @@ namespace Overun.Weapons
         public int MaxStacks => _maxStacks;
         public Sprite Icon => _icon;
         public Color RarityColor => _rarityColor;
+        public GameObject WeaponModelPrefab => _weaponModelPrefab;
+        public Vector3 ModelRotationOffset => _modelRotationOffset;
         
         /// <summary>
         /// Get damage for this weapon at a given stack level.

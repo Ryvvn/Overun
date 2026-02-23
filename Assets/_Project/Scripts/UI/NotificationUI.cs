@@ -24,12 +24,12 @@ namespace Overun.UI
 
         private void OnEnable()
         {
-            Overun.Systems.ChaosModifierSystem.Instance.OnNotification += ShowNotification;
+            Overun.Combat.ChaosModifierSystem.Instance.OnNotification += ShowNotification;
         }
         
         private void OnDisable()
         {
-            Overun.Systems.ChaosModifierSystem.Instance.OnNotification -= ShowNotification;
+            Overun.Combat.ChaosModifierSystem.Instance.OnNotification -= ShowNotification;
         }
 
         private void Awake()

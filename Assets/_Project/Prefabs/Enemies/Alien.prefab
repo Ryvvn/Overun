@@ -331,6 +331,7 @@ GameObject:
   - component: {fileID: -5274813096195279876}
   - component: {fileID: -8789157818196228165}
   - component: {fileID: 8281714253226527841}
+  - component: {fileID: -4861429737827702496}
   m_Layer: 0
   m_Name: Alien
   m_TagString: Untagged
@@ -565,6 +566,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _resistances: []
+--- !u!114 &-4861429737827702496
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6761965226185100101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8dddaa35fa767e7489f138aebc8d6190, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _deathVFXPrefab: {fileID: 0}
+  _destroyDelay: 2
+  _burstCount: 20
+  _burstRadius: 0.5
+  _burstSpeed: 3
 --- !u!1 &7060311724385838821
 GameObject:
   m_ObjectHideFlags: 0

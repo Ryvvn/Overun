@@ -2,7 +2,7 @@ using UnityEngine;
 using System;
 using Overun.Combat;
 
-namespace Overun.Systems
+namespace Overun.Combat
 {
     public enum ChaosModifierType
     {

@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41addc4fc20d6d94ab7e61a220f30c57, type: 3}
+  m_Name: Buzzsaw
+  m_EditorClassIdentifier: 
+  _weaponName: Buzzsaw
+  _weaponType: 1
+  _rarity: 1
+  _element: 0
+  _effectDuration: 3
+  _effectStrength: 1
+  _isHitScan: 1
+  _projectilePrefab: {fileID: 0}
+  _projectilePoolTag: 
+  _projectileSpeed: 40
+  _baseDamage: 6
+  _fireRate: 12
+  _projectilesPerShot: 1
+  _spreadAngle: 5
+  _spreadIncreasePerShot: 5
+  _autoFireRange: 15
+  _autoFireRateMultiplier: 0.7
+  _stackDamageBonus: 0.25
+  _stackFireRateBonus: 0.1
+  _maxStacks: 5
+  _icon: {fileID: 0}
+  _rarityColor: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  _weaponModelPrefab: {fileID: 5558774494845524494, guid: 8e0df14be7aa26544a8b2df1488f7c19,
+    type: 3}
+  _modelRotationOffset: {x: 0, y: 180, z: 0}

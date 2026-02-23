@@ -1,7 +1,9 @@
 {
     "name": "Overun.Core",
     "rootNamespace": "Overun.Core",
-    "references": [],
+    "references": [
+        "Cinemachine"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

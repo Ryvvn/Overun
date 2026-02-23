@@ -67,8 +67,7 @@ namespace Overun.Combat
                 if (vfxInstance != null)
                 {
                     // Use particle system stop or destroy
-                    var particles = vfxInstance.GetComponent<ParticleSystem>();
-                    if (particles != null)
+                    if (vfxInstance.TryGetComponent<ParticleSystem>(out var particles))
                     {
                         particles.Stop();
                         Destroy(vfxInstance, 1f); // Check destroy delay

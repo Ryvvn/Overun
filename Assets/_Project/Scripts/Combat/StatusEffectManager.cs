@@ -128,8 +128,8 @@ namespace Overun.Combat
         
         private void ApplyBurn(ElementalDamage damage)
         {
-            float chaosMult = Overun.Systems.ChaosModifierSystem.Instance != null 
-                ? Overun.Systems.ChaosModifierSystem.Instance.GetFireDamageMultiplier() 
+            float chaosMult = Overun.Combat.ChaosModifierSystem.Instance != null 
+                ? Overun.Combat.ChaosModifierSystem.Instance.GetFireDamageMultiplier() 
                 : 1.0f;
                 
             float dps = damage.damage * 0.3f * chaosMult; // Apply modifier
@@ -168,8 +168,8 @@ namespace Overun.Combat
         
         private void ApplySlow(ElementalDamage damage)
         {
-            float chaosMult = Overun.Systems.ChaosModifierSystem.Instance != null 
-                ? Overun.Systems.ChaosModifierSystem.Instance.GetIceSlowMultiplier() 
+            float chaosMult = Overun.Combat.ChaosModifierSystem.Instance != null 
+                ? Overun.Combat.ChaosModifierSystem.Instance.GetIceSlowMultiplier() 
                 : 1.0f;
                 
             float slowPercent = Mathf.Clamp(damage.effectStrength * 0.3f * chaosMult, 0.1f, 0.9f); // Higher cap for Chaos
@@ -204,8 +204,8 @@ namespace Overun.Combat
         
         private void ApplyChainLightning(ElementalDamage damage)
         {
-            int extraChains = Overun.Systems.ChaosModifierSystem.Instance != null 
-                ? Overun.Systems.ChaosModifierSystem.Instance.GetLightningChainBonus() 
+            int extraChains = Overun.Combat.ChaosModifierSystem.Instance != null 
+                ? Overun.Combat.ChaosModifierSystem.Instance.GetLightningChainBonus() 
                 : 0;
             
             float chainRange = 5f;
@@ -254,8 +254,8 @@ namespace Overun.Combat
         
         private void ApplyPoison(ElementalDamage damage)
         {
-            float durationMult = Overun.Systems.ChaosModifierSystem.Instance != null 
-                ? Overun.Systems.ChaosModifierSystem.Instance.GetPoisonDurationMultiplier() 
+            float durationMult = Overun.Combat.ChaosModifierSystem.Instance != null 
+                ? Overun.Combat.ChaosModifierSystem.Instance.GetPoisonDurationMultiplier() 
                 : 1.0f;
                 
             float baseDPS = damage.damage * 0.2f;

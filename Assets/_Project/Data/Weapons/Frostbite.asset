@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41addc4fc20d6d94ab7e61a220f30c57, type: 3}
+  m_Name: Frostbite
+  m_EditorClassIdentifier: 
+  _weaponName: Frostbite
+  _weaponType: 3
+  _rarity: 3
+  _element: 2
+  _effectDuration: 3
+  _effectStrength: 1
+  _isHitScan: 0
+  _projectilePrefab: {fileID: 0}
+  _projectilePoolTag: 
+  _projectileSpeed: 40
+  _baseDamage: 35
+  _fireRate: 2
+  _projectilesPerShot: 1
+  _spreadAngle: 2
+  _spreadIncreasePerShot: 5
+  _autoFireRange: 15
+  _autoFireRateMultiplier: 0.7
+  _stackDamageBonus: 0.25
+  _stackFireRateBonus: 0.1
+  _maxStacks: 5
+  _icon: {fileID: 0}
+  _rarityColor: {r: 0.6, g: 0.2, b: 0.8, a: 1}

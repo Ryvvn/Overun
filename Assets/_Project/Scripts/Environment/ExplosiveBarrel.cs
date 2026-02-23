@@ -1,4 +1,5 @@
 using UnityEngine;
+using Overun.Core;
 
 namespace Overun.Environment
 {
@@ -14,6 +15,8 @@ namespace Overun.Environment
         [SerializeField] private float _explosionRadius = 5f;
         [SerializeField] private float _explosionDamage = 50f;
         [SerializeField] private float _explosionForce = 500f;
+        [SerializeField] private float _explosionDuration = 0.2f;
+        [SerializeField] private float _shakeIntensity = 1f;
         
         [Header("Visual")]
         [SerializeField] private GameObject _explosionEffect;
@@ -102,6 +105,16 @@ namespace Overun.Environment
                 Instantiate(_explosionEffect, transform.position, Quaternion.identity);
             }
             
+            // Shake screen if player is near
+            // 10x the radius for shake
+            if (DistanceToPlayer() < _explosionRadius*10)
+            {
+                // Shake fall off based on distance to player
+                // Max intensity at 0 distance, 25% intensity at 10x radius
+                float intensity = _shakeIntensity * (0.25f + 0.75f * (1 - DistanceToPlayer() / (_explosionRadius*10)));
+                ScreenShakeManager.Instance.Shake(intensity , _explosionDuration);
+            }
+
             // Destroy barrel
             Destroy(gameObject);
         }
@@ -113,6 +126,13 @@ namespace Overun.Environment
             _renderer.material.color = _damageFlashColor;
             yield return new WaitForSeconds(0.1f);
             _renderer.material.color = _originalColor;
+        }
+
+        private float DistanceToPlayer()
+        {
+            var player = GameObject.FindGameObjectWithTag("Player");
+            if (player == null) return 0f;
+            return Vector3.Distance(transform.position, player.transform.position);
         }
         
         private void OnDrawGizmosSelected()
